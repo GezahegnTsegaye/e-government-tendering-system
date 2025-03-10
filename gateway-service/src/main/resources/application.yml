@@ -1,51 +1,147 @@
 server:
-  port: 0
+  port: 8080
 
 spring:
   application:
-    name: api-gateway
+    name: gateway-service
+
   cloud:
     gateway:
       discovery:
         locator:
-          enabled: 'true'
-      routes:
-        - id: vets-service
-          uri: lb://controller-service
-          predicates:
-            - Path=/api/controller/**
-          filters:
-            - StripPrefix=2
-        - id: service-service
-          uri: lb://service-service
-          predicates:
-            - Path=/api/service/**
-          filters:
-            - StripPrefix=2
-        - id: event-service
-          uri: lb://event-service
-          predicates:
-            - Path=/api/event/**
-          filters:
-            - StripPrefix=2
-        - id: committee-service
-          uri: lb://committee-service
-          predicates:
-            - Path=/api/committee/**
-          filters:
-            - StripPrefix=2
-        - id: account-ws
-          uri: lb://account-service
-          predicates:
-            - Path=/api/account/**
-          filters:
-            - StripPrefix=2
+          enabled: true
+          lower-case-service-id: true
 
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            maxAge: 3600
 
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000/auth/realms/egov-tendering
+
+  redis:
+    host: localhost
+    port: 6379
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO
+    com.egov.tendering.gateway: DEBUG
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      tenderServiceCircuitBreaker:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+
+  timelimiter:
+    instances:
+      userServiceTimeLimiter:
+        timeoutDuration: 2s
+        cancelRunningFuture: true
+      tenderServiceTimeLimiter:
+        timeoutDuration: 4s
+        cancelRunningFuture: true
+
+# Custom properties
+app:
+  security:
+    allowed-public-paths:
+      - /api/auth/**
+      - /api/public/**
+      - /api/users/register
+      - /api/users/activate
+      - /actuator/**
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /swagger-ui.html
+
+  gateway:
+    default-timeout: 10000
+    connect-timeout: 2000
 
 ---
 spring:
   config:
     activate:
-      on-profile: docker
-    import: configserver:http/config-server:8888
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  redis:
+    host: localhost
+    port: 6379
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  redis:
+    host: redis
+    port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.egov-tendering.com/auth/realms/egov-tendering
