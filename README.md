@@ -1,7 +1,7 @@
 # E-Government Tendering System
 
 A comprehensive microservices-based platform for managing government procurement and tendering processes.
-
+# Note: This project is under development there is a lot of work to be done.
 ## Overview
 
 The E-Government Tendering System is designed to streamline government procurement processes through a modern, secure, and transparent web-based solution. It allows government agencies to publish tenders, vendors to submit bids, and officials to evaluate and award contracts in a consistent and auditable manner.
