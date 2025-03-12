@@ -1,39 +1,81 @@
 package com.egov.tendering.audit.dal.model;
-
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing an audit log entry
+ */
 @Entity
 @Table(name = "audit_logs")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class AuditLog {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_type", nullable = false)
-    private String eventType;
-
-    @Column(name = "entity_type", nullable = false)
-    private String entityType;
-
-    @Column(name = "entity_id", nullable = false)
-    private String entityId;
-
-    @Column(name = "description")
-    private String description;
-
-    @Column(name = "timestamp", nullable = false)
-    private LocalDateTime timestamp;
-
-    @Column(name = "user_id")
+    @Column(nullable = false)
     private Long userId;
 
-    @Column(name = "module")
+    @Column(nullable = false)
+    private String username;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuditActionType actionType;
+
+    @Column(nullable = false)
+    private String entityType;
+
+    @Column
+    private String entityId;
+
+    @Column(nullable = false)
+    private String action;
+
+    @Column(length = 4000)
+    private String details;
+
+    @Column(nullable = false)
+    private String sourceIp;
+
+    @Column
+    private String userAgent;
+
+    @Column(nullable = false)
+    private boolean success;
+
+    @Column
+    private String failureReason;
+
+    private String eventType;
+
+    private String description;
+
     private String module;
+
+    private String subModule;
+
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime timestamp;
+
+    @Column
+    private String correlationId;
+
+    @Column
+    private String serviceId;
+
+    @Column
+    private String hostName;
 }
