@@ -24,6 +24,7 @@ public class BidItemServiceImpl implements BidItemService {
      * Save a list of bid items.
      */
     @Transactional
+    @Override
     public void saveBidItems(Long bidId, List<BidItemDTO> items) {
         List<BidItem> bidItems = items.stream()
                 .map(item -> {
@@ -38,6 +39,7 @@ public class BidItemServiceImpl implements BidItemService {
     /**
      * Get bid items for a specific bid.
      */
+    @Override
     public List<BidItemRequest> getBidItems(Long bidId) {
         return bidItemRepository.findByBidId(bidId)
                 .stream()
