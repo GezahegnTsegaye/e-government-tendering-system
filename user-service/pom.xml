@@ -17,7 +17,7 @@
         <!-- Internal Dependencies -->
         <dependency>
             <groupId>com.egov.tendering</groupId>
-            <artifactId>common-lib</artifactId>
+            <artifactId>common-util</artifactId>
         </dependency>
 
         <!-- Spring Boot Starters -->
@@ -133,10 +133,19 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <image>
+                        <name>${project.groupId}/user.service:${project.version}</name>
+                    </image>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build-image</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
