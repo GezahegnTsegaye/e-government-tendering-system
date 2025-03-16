@@ -29,6 +29,20 @@ public class Bid {
   @Column(name = "tenderer_id", nullable = false)
   private Long tendererId;
 
+  private Long contractId;
+
+  private LocalDateTime awardedAt;
+  private String awardComments;
+  private Long awardedBy;
+  private LocalDateTime contractCreatedAt;
+
+
+  private Long evaluatedBy;
+  private String evaluationComments;
+  private LocalDateTime evaluatedAt;
+
+  private String statusReason;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private BidStatus status;

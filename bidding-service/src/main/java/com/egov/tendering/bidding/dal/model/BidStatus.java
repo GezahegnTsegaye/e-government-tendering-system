@@ -10,5 +10,11 @@ public enum BidStatus {
     SUBMITTED,
     UNDER_EVALUATION,
     ACCEPTED,
-    REJECTED
+    REJECTED,
+    NOT_SUBMITTED,
+    CANCELLED,
+    EVALUATED,
+    AWARDED,
+    CONTRACTED,
+    TERMINATED
 }

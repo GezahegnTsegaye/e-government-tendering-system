@@ -29,4 +29,11 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
      * @return true if a bid exists for the given tender ID, otherwise false
      */
     boolean existsByTenderId(Long tenderId);
+
+
+    /**
+     * Find all bids for a specific tender with any status except the specified one
+     */
+    List<Bid> findByTenderIdAndStatusNot(Long tenderId, BidStatus status);
+
 }

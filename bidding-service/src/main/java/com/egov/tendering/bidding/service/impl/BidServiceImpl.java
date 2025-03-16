@@ -138,20 +138,24 @@ public class BidServiceImpl implements BidService {
         bidRepository.delete(bid);
     }
 
+    // Replace these methods in your existing BidServiceImpl class
+
     @Override
     @Transactional(readOnly = true)
-    public Page<BidDTO> getBidsByTenderer(Long tendererId, Pageable pageable) {
+    public PageDTO<BidDTO> getBidsByTenderer(Long tendererId, Pageable pageable) {
         log.info("Getting bids for tenderer ID: {}", tendererId);
-        return bidRepository.findByTendererId(tendererId, pageable)
-                .map(bidMapper::toDto);
+        Page<Bid> bidPage = bidRepository.findByTendererId(tendererId, pageable);
+        Page<BidDTO> dtoPage = bidPage.map(bidMapper::toDto);
+        return PageDTO.fromPage(dtoPage);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BidDTO> getBidsByTender(Long tenderId, Pageable pageable) {
+    public PageDTO<BidDTO> getBidsByTender(Long tenderId, Pageable pageable) {
         log.info("Getting bids for tender ID: {}", tenderId);
-        return bidRepository.findByTenderId(tenderId, pageable)
-                .map(bidMapper::toDto);
+        Page<Bid> bidPage = bidRepository.findByTenderId(tenderId, pageable);
+        Page<BidDTO> dtoPage = bidPage.map(bidMapper::toDto);
+        return PageDTO.fromPage(dtoPage);
     }
 
     @Override
@@ -467,5 +471,152 @@ public class BidServiceImpl implements BidService {
             default:
                 return false;
         }
+    }
+
+    @Transactional
+    public void closeBidsForTender(Long tenderId) {
+        log.info("Closing all bids for tender ID: {}", tenderId);
+
+        // Find all draft bids for this tender
+        List<Bid> draftBids = bidRepository.findByTenderIdAndStatus(tenderId, BidStatus.DRAFT);
+
+        for (Bid bid : draftBids) {
+            // Save previous status for event publishing
+            BidStatus oldStatus = bid.getStatus();
+
+            // Update bid status to NOT_SUBMITTED
+            bid.setStatus(BidStatus.NOT_SUBMITTED);
+            bid.setStatusReason("Tender closing date reached before submission");
+            bidRepository.save(bid);
+
+            // Publish status change event
+            eventPublisher.publishBidStatusChangedEvent(bid, oldStatus);
+            log.info("Closed draft bid ID: {}", bid.getId());
+        }
+
+        log.info("Closed {} draft bids for tender ID: {}", draftBids.size(), tenderId);
+    }
+
+    @Transactional
+    public void cancelBidsForTender(Long tenderId, String reason) {
+        log.info("Cancelling all bids for tender ID: {} due to: {}", tenderId, reason);
+
+        // Find all active (non-cancelled) bids for this tender
+        List<Bid> activeBids = bidRepository.findByTenderIdAndStatusNot(tenderId, BidStatus.CANCELLED);
+
+        for (Bid bid : activeBids) {
+            // Save previous status for event publishing
+            BidStatus oldStatus = bid.getStatus();
+
+            // Update bid status to CANCELLED
+            bid.setStatus(BidStatus.CANCELLED);
+            bid.setStatusReason("Tender cancelled: " + reason);
+            bidRepository.save(bid);
+
+            // Publish status change event
+            eventPublisher.publishBidStatusChangedEvent(bid, oldStatus);
+            log.info("Cancelled bid ID: {}", bid.getId());
+        }
+
+        log.info("Cancelled {} bids for tender ID: {}", activeBids.size(), tenderId);
+    }
+
+    @Transactional
+    public void updateBidEvaluationStatus(Long bidId, String evaluationResult, Long evaluatedBy, String comments) {
+        log.info("Updating evaluation status for bid ID: {} with result: {}", bidId, evaluationResult);
+
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bid", "id", bidId));
+
+        // Validate current bid status
+        if (bid.getStatus() != BidStatus.SUBMITTED && bid.getStatus() != BidStatus.UNDER_EVALUATION) {
+            throw new InvalidBidStateException("Can only update evaluation status for SUBMITTED or UNDER_EVALUATION bids");
+        }
+
+        BidStatus oldStatus = bid.getStatus();
+
+        // Determine new status based on evaluation result
+        switch (evaluationResult.toUpperCase()) {
+            case "PASS":
+            case "PASSED":
+                bid.setStatus(BidStatus.EVALUATED);
+                break;
+
+            case "FAIL":
+            case "FAILED":
+                bid.setStatus(BidStatus.REJECTED);
+                break;
+
+            case "UNDER_REVIEW":
+            case "CONDITIONAL":
+                bid.setStatus(BidStatus.UNDER_EVALUATION);
+                break;
+
+            default:
+                log.warn("Unknown evaluation result: {} for bid ID: {}", evaluationResult, bidId);
+                throw new IllegalArgumentException("Invalid evaluation result: " + evaluationResult);
+        }
+
+        // Set evaluation details
+        bid.setEvaluatedBy(evaluatedBy);
+        bid.setEvaluationComments(comments);
+        bid.setEvaluatedAt(LocalDateTime.now());
+
+        // Save and publish event
+        bidRepository.save(bid);
+        eventPublisher.publishBidStatusChangedEvent(bid, oldStatus);
+        log.info("Updated evaluation status for bid ID: {} to {}", bidId, bid.getStatus());
+    }
+
+    @Transactional
+    public void awardBid(Long bidId, Long awardedBy, String awardComments) {
+        log.info("Awarding bid ID: {}", bidId);
+
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bid", "id", bidId));
+
+        // Validate current bid status
+        if (bid.getStatus() != BidStatus.EVALUATED) {
+            throw new InvalidBidStateException("Can only award EVALUATED bids");
+        }
+
+        BidStatus oldStatus = bid.getStatus();
+
+        // Update bid status to AWARDED
+        bid.setStatus(BidStatus.AWARDED);
+        bid.setAwardedBy(awardedBy);
+        bid.setAwardComments(awardComments);
+        bid.setAwardedAt(LocalDateTime.now());
+
+        // Save and publish events
+        bidRepository.save(bid);
+        eventPublisher.publishBidStatusChangedEvent(bid, oldStatus);
+
+        log.info("Awarded bid ID: {}", bidId);
+    }
+
+    @Transactional
+    public void updateBidContractStatus(Long bidId, Long contractId) {
+        log.info("Updating contract status for bid ID: {} with contract ID: {}", bidId, contractId);
+
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bid", "id", bidId));
+
+        // Validate current bid status
+        if (bid.getStatus() != BidStatus.AWARDED) {
+            throw new InvalidBidStateException("Can only create contracts for AWARDED bids");
+        }
+
+        BidStatus oldStatus = bid.getStatus();
+
+        // Update bid status to CONTRACTED
+        bid.setStatus(BidStatus.CONTRACTED);
+        bid.setContractId(contractId);
+        bid.setContractCreatedAt(LocalDateTime.now());
+
+        // Save and publish event
+        bidRepository.save(bid);
+        eventPublisher.publishBidStatusChangedEvent(bid, oldStatus);
+        log.info("Updated contract status for bid ID: {} to CONTRACTED with contract ID: {}", bidId, contractId);
     }
 }

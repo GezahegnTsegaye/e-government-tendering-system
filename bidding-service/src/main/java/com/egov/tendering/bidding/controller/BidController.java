@@ -1,6 +1,7 @@
 package com.egov.tendering.bidding.controller;
 
 import com.egov.tendering.bidding.dal.dto.BidDTO;
+import com.egov.tendering.bidding.dal.dto.PageDTO;
 import com.egov.tendering.bidding.dal.model.BidStatus;
 import com.egov.tendering.bidding.service.BidService;
 import lombok.RequiredArgsConstructor;
@@ -68,22 +69,22 @@ public class BidController {
   }
 
   @GetMapping("/tenderer")
-  public ResponseEntity<Page<BidDTO>> getBidsByTenderer(
+  public ResponseEntity<PageDTO<BidDTO>> getBidsByTenderer(
           @RequestHeader("X-User-ID") Long tendererId,
           @PageableDefault(size = 10) Pageable pageable) {
 
     log.info("Getting bids for tenderer ID: {}", tendererId);
-    Page<BidDTO> bids = bidService.getBidsByTenderer(tendererId, pageable);
+    PageDTO<BidDTO> bids = bidService.getBidsByTenderer(tendererId, pageable);
     return ResponseEntity.ok(bids);
   }
 
   @GetMapping("/tender/{tenderId}")
-  public ResponseEntity<Page<BidDTO>> getBidsByTender(
+  public ResponseEntity<PageDTO<BidDTO>> getBidsByTender(
           @PathVariable Long tenderId,
           @PageableDefault(size = 10) Pageable pageable) {
 
     log.info("Getting bids for tender ID: {}", tenderId);
-    Page<BidDTO> bids = bidService.getBidsByTender(tenderId, pageable);
+    PageDTO<BidDTO> bids = bidService.getBidsByTender(tenderId, pageable);
     return ResponseEntity.ok(bids);
   }
 
