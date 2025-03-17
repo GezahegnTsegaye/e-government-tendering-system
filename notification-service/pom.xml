@@ -14,6 +14,16 @@
     <description>Notification Service for E-Government Tendering System</description>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.egov.tendering</groupId>
+            <artifactId>app-config-data</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.egov.tendering</groupId>
+            <artifactId>common-util</artifactId>
+        </dependency>
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -149,17 +159,18 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
+                    <image>
+                        <name>${project.groupId}/notification.service:${project.version}</name>
+                    </image>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build-image</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
