@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  discovery-service:
+    image: egov/discovery-service:1.0.0-SNAPSHOT
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - egov-network
+
+
+networks:
+  egov-network:
+    driver: bridge

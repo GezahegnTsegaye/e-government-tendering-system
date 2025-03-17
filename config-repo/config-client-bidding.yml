@@ -56,3 +56,29 @@ kafka:
   topics:
     user-events: user-events
     tender-events: tender-events
+
+# Kafka Consumer Configuration
+kafka-consumer-config:
+  key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+  consumer-group-id: service-consumer-group
+  auto-offset-reset: earliest
+  batch-listener: true
+  auto-startup: true
+  concurrency-level: 3
+  session-timeout-ms: 10000
+  heartbeat-interval-ms: 3000
+  max-poll-interval-ms: 300000
+  max-poll-records: 500
+
+# Kafka Producer Configuration
+kafka-producer-config:
+  key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  acks: all
+  batch-size: 16384
+  linger-ms: 5
+  request-timeout-ms: 30000
+  retry-count: 5
+  compression-type: 1
+  compression-codec: gzip

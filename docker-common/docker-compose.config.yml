@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  config-service:
+    image: egov/config-service:1.0.0-SNAPSHOT
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    depends_on:
+      - discovery-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    networks:
+      - egov-network
+
+networks:
+  egov-network:
+    driver: bridge

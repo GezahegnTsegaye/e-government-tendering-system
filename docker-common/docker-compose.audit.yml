@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  audit-service:
+    build:
+      context: ./audit-service
+      dockerfile: Dockerfile
+    container_name: audit-service
+    depends_on:
+      - discovery-service
+      - config-service
+      - mysql
+      - user-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=audit_service
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_ENABLED:-kafka:9092}
+      - APP_KAFKA_ENABLED=${KAFKA_ENABLED:-false}
+    networks:
+      - egov-network
+
+networks:
+  egov-network:
+    external: true

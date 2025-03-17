@@ -1,0 +1,109 @@
+server:
+  port: 8086
+  servlet:
+    context-path: /evaluation-service
+
+spring:
+  application:
+    name: evaluation-service
+
+  # Database Configuration
+  datasource:
+    url: jdbc:mysql://localhost:3306/egov_evaluation?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.trusted.packages: "com.egov.tendering.*"
+
+# Eureka Configuration
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 60000
+        loggerLevel: full
+  circuitbreaker:
+    enabled: true
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Custom Application Properties
+app:
+  # Kafka Topics Configuration
+  kafka:
+    topics:
+      evaluation-created: evaluation-created
+      evaluation-updated: evaluation-updated
+      evaluation-status-changed: evaluation-status-changed
+      evaluation-deleted: evaluation-deleted
+      tender-evaluation-completed: tender-evaluation-completed
+      tender-evaluation-approved: tender-evaluation-approved
+      review-created: review-created
+      review-updated: review-updated
+      review-deleted: review-deleted
+
+  # Service Discovery Configuration
+  feign:
+    tender-service: tender-service
+    bid-service: bidding-service
+    user-service: user-service
+
+  # Service-Specific Configuration
+  evaluation-service:
+    version: v1
+    custom-audience: evaluation-service
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    com.egov.tendering.evaluation: DEBUG

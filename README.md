@@ -63,7 +63,7 @@ The system consists of the following microservices:
 
 ```
 e-government-tendering-system/
-├── common-lib/                  # Shared libraries and utilities
+├── common-util/                  # Shared libraries and utilities
 ├── config-service/              # Centralized configuration service
 ├── discovery-service/           # Service registry and discovery
 ├── gateway-service/             # API gateway
