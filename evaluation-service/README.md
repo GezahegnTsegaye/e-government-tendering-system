@@ -126,7 +126,7 @@ This service is designed to work as part of a microservice architecture and shou
 - Tender Service
 - Bidding Service
 - User Service
-- common-lib
+- common-util
 
 ## Configuration
 
